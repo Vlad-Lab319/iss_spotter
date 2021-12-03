@@ -2,7 +2,7 @@ const request = require('request');
 
 const fetchMyIP = function(callback) {
   // use request to fetch IP address from JSON API
-  request('https://api.ipify.org?format=json', (error, response, ip) => {
+  request('https://api.ipify.org?format=json', (error, response, body) => {
     
     if (error) {
       callback(error, null);
@@ -10,11 +10,12 @@ const fetchMyIP = function(callback) {
     }
 
     if (response.statusCode !== 200) {
-      const msg = `Status Code ${response.statusCode} when fetching IP. Response: ${ip}`;
+      const msg = `Status Code ${response.statusCode} when fetching IP. Response: ${body}`;
       callback(Error(msg), null);
       return;
     }
 
+    const ip = JSON.parse(body).ip;
     callback(null, ip);
   });
   
@@ -36,7 +37,7 @@ const fetchCoordssByIP = function(ip, callback) {
 
     let coordinates = { latitude: JSON.parse(data).latitude, longitude: parsedData.longitude };
 
-    callback(error, coordinates);
+    callback(null, coordinates);
   });
 
 };
@@ -46,12 +47,32 @@ const fetchISSFlyOverTimes = function(lat, lon, callback) {
 
     let parsedData = JSON.parse(data);
 
-    callback(error, parsedData);
+    callback(error, parsedData.response);
   });
 
 };
   
+const nextISSTimesForMyLocation = function(callback) {
+  fetchMyIP((error, ip) => {
+    if (error) {
+      return callback(error, null);
+    }
 
+    fetchCoordssByIP(ip, (error, data) => {
+      if (error) {
+        return callback(error, null);
+      }
+      fetchISSFlyOverTimes(data.latitude, data.longitude, (error, passTimes) => {
+        if (error) {
+          return callback(error, null);
+        }
+       
+        callback(null, passTimes);
+        });
+      });
+    });
+  
+};
 
-module.exports = { fetchMyIP, fetchCoordssByIP, fetchISSFlyOverTimes };
+module.exports = { nextISSTimesForMyLocation };
 
