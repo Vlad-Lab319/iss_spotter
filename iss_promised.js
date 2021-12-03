@@ -22,8 +22,9 @@ const nextISSTimesForMyLocation = function() {
   .then(fetchCoordssByIP)
   .then(fetchISSFlyOverTimes)
   .then(body => {
-      console.log(body)
-      return body;
+      const parsedData = JSON.parse(body)
+      // console.log(parsedData)
+      return parsedData;
     }
     );
 };
